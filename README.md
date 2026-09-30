@@ -1,7 +1,25 @@
 # Epidemic Breakers — OptiForge 2026
 
-Tune circuit-breaker thresholds on a microservice call graph so cascading
-slowness is contained without tripping breakers on healthy traffic.
+Tune per-edge circuit-breaker thresholds on a microservice call graph to
+contain cascading failures. Objective: F = cascade_size + 2·false_trips +
+0.1·latency_penalty, evaluated on held-out failure scenarios with a
+strict train/test seed split.
+
+## Contents
+
+- [The problem](#the-problem)
+- [Method](#method)
+- [Quickstart](#quickstart)
+- [Layout](#layout)
+- [Architecture](#architecture)
+- [How to run](#how-to-run)
+- [Demo](#demo)
+- [Results (Round 1)](#results-round-1)
+- [Round 2: hidden shift](#round-2-hidden-shift)
+- [Extensions and baselines](#extensions-and-baselines)
+- [Known limitations](#known-limitations)
+- [Societal impact (SDG 9)](#societal-impact-sdg-9)
+- [Defense notes](#defense-notes-for-the-judges)
 
 ## The problem
 
@@ -50,6 +68,14 @@ This is domain knowledge, not cheating; every method gets it.
 **Train/test discipline:** the search only ever sees TRAIN scenario seeds;
 all reported numbers are on held-out TEST seeds.
 
+## Quickstart
+
+```bash
+pip install -r requirements.txt
+pytest tests/ -q
+python3 main.py --quick          # smoke test (~15 s)
+```
+
 ## Layout
 
 ```
@@ -76,6 +102,27 @@ results/           # CSV tables + convergence plot (generated)
 | Baselines: fixed-θ, random search, oracle heuristic | `src/baselines.py` — oracle uses hidden per-edge noise, unavailable to any real tuner |
 | Environment shift (Round 2) | `main.py --round2` — higher spread probability, longer breaker cooldown, warm-start adaptation |
 
+## Architecture
+
+```mermaid
+graph LR
+    A[graph_gen<br/>seeded 40-node<br/>call graph] --> B[simulator<br/>cascade dynamics<br/>+ circuit breakers]
+    B --> C[fitness<br/>F over<br/>scenario seeds]
+    C --> D[ga<br/>guided / vanilla<br/>threshold search]
+    D --> E[results/<br/>CSVs + plots]
+    E --> F[web demo<br/>JS re-implementation<br/>+ precomputed data]
+    G[baselines<br/>fixed-0.5,<br/>random search] --> C
+```
+
+**Data flow:** `graph_gen` builds the deterministic 40-node graph. The
+`simulator` runs cascade scenarios on it with a given threshold vector.
+`fitness` averages F over train/test seeds. The `ga` module searches
+threshold space using fitness feedback; `baselines` provides comparison
+points at the same budget. Results land in `results/` as CSVs; the web
+demo re-implements the simulator in JavaScript and ships precomputed
+data exported from this repo (see `docs/ARCHITECTURE.md` for the
+Python/JS split and parity approach).
+
 ## How to run
 
 ```bash
@@ -89,6 +136,19 @@ python3 main.py --round2          # Round 2 shift experiment
 
 `main.py` options: `--runs`, `--pop`, `--gens`, `--train-seeds`,
 `--test-seeds`, `--seed`, `--outdir`.
+
+### Reproducing each results table
+
+| Table | Command | Output |
+|-------|---------|--------|
+| Round 1 (main comparison) | `python3 main.py --outdir results` | `results/round1_results.csv` |
+| Paired ablation (n=10) | `python3 main.py --ablation --outdir results` | `results/ablation.csv`, `results/ablation_summary.csv` |
+| Extended baselines (n=3) | `python3 main.py --ablation --extended --runs 3 --outdir results` | `results/ablation_extended.csv` |
+| Round 2 shift | `python3 main.py --round2 --outdir results` | `results/round2_results.csv`, `results/round2_curves.csv` |
+| Fixed-0.5 baseline | `python3 scripts/reeval_fixed05.py` | `results/fixed05_test_seeds.csv` |
+
+All commands use deterministic seeds; re-running reproduces the CSVs
+byte-for-byte (modulo timing columns).
 
 ## Demo
 
