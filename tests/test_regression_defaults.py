@@ -6,12 +6,17 @@ evaluating with all-default arguments on 4 test seeds (the first 4 of
 ``make_seeds(24, base=2000)`` -- the Round-1 test-seed scheme):
 
     PINNED_FIXED_F    = 42.91103603603604    # theta_e = 0.5 for all edges
-    PINNED_GA_THETA_F = 38.387387387387385  # results/best_theta.npy as saved
+
+``PINNED_GA_THETA_F`` was re-pinned when ``results/best_theta.npy`` was
+regenerated with provenance by ``scripts/make_best_theta.py`` (see
+``results/best_theta.json`` for seeds, config and git SHA); it is the
+new theta's F on the same 4 test seeds:
+
+    PINNED_GA_THETA_F = 33.0106981981982    # regenerated 2026-09-30
 
 If either test fails, a default changed silently (objective weights,
 simulator constants, seed scheme, or theta/edge ordering). Update the
-pins only after confirming the change is intended, by re-running the
-capture procedure in a worktree of the baseline tag.
+pins only after confirming the change is intended.
 """
 
 from pathlib import Path
@@ -26,7 +31,7 @@ from src.utils import make_seeds
 REPO = Path(__file__).resolve().parent.parent
 
 PINNED_FIXED_F = 42.91103603603604
-PINNED_GA_THETA_F = 38.387387387387385
+PINNED_GA_THETA_F = 33.0106981981982
 
 
 def _study_setup():

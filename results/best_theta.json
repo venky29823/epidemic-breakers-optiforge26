@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-09-30T06:26:16.966810+00:00",
+  "git_sha": "5dd2915e8ef045f861eb5f49254c67eb12766f46",
+  "script": "scripts/make_best_theta.py",
+  "graph": {
+    "n_nodes": 40,
+    "seed": 7,
+    "n_edges": 111
+  },
+  "master_seed": 42,
+  "train_seeds": {
+    "n": 24,
+    "base": 1000,
+    "seeds": [
+      437485271,
+      1119667345,
+      1821970821,
+      1296740491,
+      1757804391,
+      1011339808,
+      448142717,
+      436471632,
+      1080082184,
+      1135501360,
+      636695023,
+      410247287,
+      1072658190,
+      604614568,
+      561382199,
+      1618518808,
+      401104356,
+      1184706118,
+      1642826,
+      1854829033,
+      1928057705,
+      1729523673,
+      1483458487,
+      533376232
+    ]
+  },
+  "test_seeds": {
+    "n": 12,
+    "base": 2000,
+    "seeds": [
+      505466217,
+      1235095839,
+      434924670,
+      1409661113,
+      382251919,
+      58063026,
+      1009146652,
+      1087823364,
+      972233924,
+      1389783718,
+      1165936069,
+      577781726
+    ]
+  },
+  "ga_config": {
+    "pop_size": 30,
+    "generations": 40,
+    "tournament_k": 3,
+    "crossover_rate": 0.9,
+    "mutation_rate": 0.05,
+    "mutation_sigma": 0.08,
+    "elitism": 2,
+    "mutation_mode": "guided",
+    "init_lo": 0.2,
+    "init_hi": 0.7
+  },
+  "sim": {
+    "spread_p": 0.25,
+    "cooldown": 5,
+    "n_steps": 40
+  },
+  "result": {
+    "train_F": 21.774962462462458,
+    "test_F": 34.90803303303304,
+    "test_F_std": 11.230813561903082,
+    "evals": 1230
+  },
+  "note": "best_theta.npy is the argmin-train-F individual of this single guided-GA run; test_F is post-hoc on held-out seeds."
+}
