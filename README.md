@@ -175,6 +175,9 @@ oracle reference), tweak spread probability / cooldown / noise, and watch
 the epidemic curve plus the `F` breakdown — or run a head-to-head
 comparison on fresh seeds.
 
+> **Legacy:** `streamlit_app.py` (the original Streamlit demo) still runs
+> but is unmaintained — the static site above is the supported demo.
+
 ## Results (Round 1)
 
 Source: `results/round1_results.csv` (fresh full run, 2026-09-30). 3
