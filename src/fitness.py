@@ -49,7 +49,7 @@ def evaluate(
     )
     return {
         "F": float(costs.mean()),
-        "F_std": float(costs.std()),
+        "F_std": float(costs.std(ddof=1)),  # sample sd over scenarios
         "cascade_size": float(np.mean([r["cascade_size"] for r in results])),
         "false_trips": float(np.mean([r["false_trips"] for r in results])),
         "latency_penalty": float(np.mean([r["latency_penalty"] for r in results])),
