@@ -100,7 +100,10 @@ repo. It **re-implements the simulator in JavaScript** (`sim.js`: cascade
 dynamics, fitness, edge betweenness, and a small in-browser GA) and bakes
 in **precomputed data exported from this repo** — the exact 40-node /
 111-edge graph, its per-edge noise/spread parameters, and the
-GA-optimized thresholds (`data/*.json`). `scripts/check_web_parity.py`
+GA-optimized thresholds (`data/*.json`). The precomputed theta is from
+**one** guided-GA run (`scripts/make_best_theta.py`: train F 21.77 /
+test F 34.91 on its 24 train / 12 test seeds), shown as-is — not an
+average over runs. `scripts/check_web_parity.py`
 verifies the baked-in constants agree with the Python source of truth
 (graph size, edge identity/order, per-edge params, best_theta, sim
 defaults); known differences are documented in that script's output
@@ -178,6 +181,25 @@ Paired (vanilla − guided) test F: mean 1.27, sd 2.91, bootstrap 95% CI
 [−0.35, 3.03] (positive favors guided); guided won 5/10 paired runs.
 Regenerate with `python3 main.py --ablation --outdir results`.
 
+### Extended baselines (paired, n=10)
+
+`python3 main.py --ablation --extended --outdir results` (~2h) adds three
+baselines to the same paired design (fresh RNG offsets; the original three
+methods' streams are untouched). Output: `results/ablation_extended.csv`.
+
+- **random-weights GA**: guided-mutation machinery with uniform-random
+  weights — isolates whether the win comes from non-uniformity alone.
+- **(1+1)-ES**: single-parent elitist evolution strategy, Gaussian
+  mutation (σ=0.1), same 1,230-eval budget.
+- **calibrated**: estimates per-edge noise amplitudes from 24 probe
+  simulations (breakers disabled, healthy-callee steps only) via
+  `amp_hat = sqrt(3*var(obs))`, then `theta = clip(amp_hat + 0.10)`.
+  The +0.10 margin was **not** tuned on train seeds — it copies the
+  oracle's margin for comparability, and is arbitrary (see Known
+  limitations). The calibrated method uses 24 probe simulator calls and
+  **zero** optimizer evaluations; the 1,230-eval budget applies to the
+  optimizer methods only (each eval = 24 train-seed simulations).
+
 ## Round 2: hidden shift
 
 `python3 main.py --round2` hardens the environment: spread probability
@@ -232,6 +254,14 @@ adapts steadily. Both adapted methods beat doing nothing (stale mean
   and edge-removal shift (`--round2-graph-shift`, ~10% of edges). Other
   shift types (new services, correlated noise, weight changes) are
   supported by the code paths but not measured in the report.
+- **Calibrated heuristic is simulator-flattered**: it estimates per-edge
+  noise amplitudes from probe observables via `sqrt(3*var)` on
+  healthy-callee steps, which is exact only because this simulator's
+  noise is stationary and zero-centered uniform (E[obs]=0 when the callee
+  is healthy). Real telemetry has drift, diurnal patterns, and
+  non-zero-centered baselines that would bias or break the estimate; the
+  heuristic's edge over the GA here does not imply it transfers to
+  production signals.
 
 ## Societal impact (SDG 9)
 
