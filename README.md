@@ -117,17 +117,32 @@ comparison on fresh seeds.
 
 ## Results (Round 1)
 
-Fresh full run, 2026-09-30 (`results/round1_results.csv`): 3 independent
-runs per method (1,230 evals each), 24 train seeds (base 1000) / 12 held-out
-test seeds (base 2000). Lower F is better. Test F is reported as mean ±
-sample sd (ddof=1) over the held-out test scenarios.
+Source: `results/round1_results.csv` (fresh full run, 2026-09-30). 3
+independent runs per method (1,230 evals each), 24 train seeds (base
+1000) / 12 held-out test seeds (base 2000). Lower F is better. Test F is
+mean ± sample sd (ddof=1) across runs.
 
-| method        | test F (mean ± sd, n=3) | vs fixed-0.5 |
-|---------------|-------------------------|--------------|
-| fixed-0.5     | 40.56                   | —            |
-| random search | 35.35 ± 1.69            | −13%         |
-| vanilla GA    | 35.68 ± 3.17            | −12%         |
-| guided GA     | 33.28 ± 1.51            | −18%         |
+| method        | test F (mean ± sd, n=3) | vs fixed-0.5 | source CSV |
+|---------------|-------------------------|--------------|------------|
+| fixed-0.5     | 40.56                   | —            | round1_results.csv |
+| random search | 35.35 ± 1.69            | −13%         | round1_results.csv |
+| vanilla GA    | 35.68 ± 3.17            | −12%         | round1_results.csv |
+| guided GA     | 33.28 ± 1.51            | −18%         | round1_results.csv |
+
+Claim-to-source map (all claims below come only from these files):
+
+- "Both GAs beat fixed-0.5 by ~12–18% on held-out seeds" →
+  `results/round1_results.csv` (test-F means 35.68, 33.28 vs 40.56).
+- "Oracle scores 24.74 ± 10.48 on 24 test seeds" → reproducible via the
+  snippet below (uses `src/baselines.oracle_thresholds`, not a CSV).
+- "Paired ablation (n=10): guided 31.61 ± 3.00 vs vanilla 32.88 ± 3.19
+  vs random-search 34.63 ± 3.47; paired diff 1.27, CI [−0.35, 3.03]" →
+  `results/ablation_summary.csv`. The CI includes zero: the guidance
+  effect is not established at n=10.
+- "Random search roughly ties vanilla GA (35.35 vs 35.68)" →
+  `results/round1_results.csv`.
+- "Precomputed demo theta: train 21.77 / test 34.91 (one run)" →
+  `results/best_theta.json` (`result.train_F`, `result.test_F`).
 
 What the numbers actually say:
 
@@ -181,11 +196,13 @@ Paired (vanilla − guided) test F: mean 1.27, sd 2.91, bootstrap 95% CI
 [−0.35, 3.03] (positive favors guided); guided won 5/10 paired runs.
 Regenerate with `python3 main.py --ablation --outdir results`.
 
-### Extended baselines (paired, n=10)
+### Extended baselines (paired, n=3 pilot)
 
-`python3 main.py --ablation --extended --outdir results` (~2h) adds three
-baselines to the same paired design (fresh RNG offsets; the original three
-methods' streams are untouched). Output: `results/ablation_extended.csv`.
+`python3 main.py --ablation --extended --runs 3 --outdir results` (~40 min)
+adds three baselines to the same paired design (fresh RNG offsets; the
+original three methods' streams are untouched). Output:
+`results/ablation_extended.csv`. Pre-specified contrasts are in
+`docs/analysis_plan.md`.
 
 - **random-weights GA**: guided-mutation machinery with uniform-random
   weights — isolates whether the win comes from non-uniformity alone.
@@ -199,6 +216,18 @@ methods' streams are untouched). Output: `results/ablation_extended.csv`.
   limitations). The calibrated method uses 24 probe simulator calls and
   **zero** optimizer evaluations; the 1,230-eval budget applies to the
   optimizer methods only (each eval = 24 train-seed simulations).
+
+| method            | train F | test F (mean ± sd, n=3) | status |
+|-------------------|---------|-------------------------|--------|
+| random-search     | —       | —                       | results pending |
+| vanilla GA        | —       | —                       | results pending |
+| guided GA         | —       | —                       | results pending |
+| random-weights GA | —       | —                       | results pending |
+| (1+1)-ES          | —       | —                       | results pending |
+| calibrated        | —       | —                       | results pending |
+
+No numbers are reported until `results/ablation_extended.csv` lands;
+the table will be filled from that file only.
 
 ## Round 2: hidden shift
 
