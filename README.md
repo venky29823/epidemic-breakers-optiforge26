@@ -198,12 +198,44 @@ Paired (vanilla − guided) test F: mean 1.27, sd 2.91, bootstrap 95% CI
 [−0.35, 3.03] (positive favors guided); guided won 5/10 paired runs.
 Regenerate with `python3 main.py --ablation --outdir results`.
 
+## Round 2: hidden shift
+
+`python3 main.py --round2` hardens the environment: spread probability
+0.25 → 0.45 and breaker cooldown 5 → 12 steps. It then compares, on
+Round 2 test seeds (2 reps, 20 adaptation generations each):
+
+- **warm-start**: Round 1 final population + diversity noise + 3x mutation
+  boost for 10 generations
+- **from-scratch**: fresh population, same generation budget
+- **stale**: Round 1 thresholds deployed as-is (no adaptation)
+
+| method       | rep | final test F | stale F | gens to recover past stale |
+|--------------|-----|--------------|---------|----------------------------|
+| warm-start   | 0   | 29.30        | 35.67   | 5                          |
+| from-scratch | 0   | 37.79        | 35.67   | — (never in 20 gens)       |
+| warm-start   | 1   | 35.78        | 39.93   | 7                          |
+| from-scratch | 1   | 32.31        | 39.93   | 0 (lucky init)             |
+
+Reading: warm-start recovered past the stale baseline on **both** reps
+(5 and 7 generations); restart-from-scratch recovered on only one rep and
+failed outright on the other. On these two reps the warm-start advantage is
+steadier recovery rather than final quality — it pays a small upfront cost from the
+diversity noise (see the early part of `results/recovery.svg`) and then
+adapts steadily. Both adapted methods beat doing nothing (stale mean
+37.80). Raw curves: `results/round2_curves.csv`.
+
+## Extensions and baselines
+
+The following are supplementary controls and exploratory baselines,
+kept separate from the main study above. Their results stand, but they
+do not change the core findings.
+
 ### Extended baselines (paired, n=3 pilot)
 
 `python3 main.py --ablation --extended --runs 3 --outdir results` (~40 min)
 adds three baselines to the same paired design (fresh RNG offsets; the
 original three methods' streams are untouched). Output:
-`results/ablation_extended.csv`. Pre-specified contrasts are in
+`results/ablation_extended.csv`. Contrasts are in
 `docs/analysis_plan.md`.
 
 - **random-weights GA**: guided-mutation machinery with uniform-random
@@ -246,32 +278,6 @@ the text):
 n=3 is a pilot: intervals are wide and these are not definitive. No
 claim is made beyond what the intervals support. All other pairwise
 comparisons are exploratory (see `docs/analysis_plan.md`).
-
-## Round 2: hidden shift
-
-`python3 main.py --round2` hardens the environment: spread probability
-0.25 → 0.45 and breaker cooldown 5 → 12 steps. It then compares, on
-Round 2 test seeds (2 reps, 20 adaptation generations each):
-
-- **warm-start**: Round 1 final population + diversity noise + 3x mutation
-  boost for 10 generations
-- **from-scratch**: fresh population, same generation budget
-- **stale**: Round 1 thresholds deployed as-is (no adaptation)
-
-| method       | rep | final test F | stale F | gens to recover past stale |
-|--------------|-----|--------------|---------|----------------------------|
-| warm-start   | 0   | 29.30        | 35.67   | 5                          |
-| from-scratch | 0   | 37.79        | 35.67   | — (never in 20 gens)       |
-| warm-start   | 1   | 35.78        | 39.93   | 7                          |
-| from-scratch | 1   | 32.31        | 39.93   | 0 (lucky init)             |
-
-Reading: warm-start recovered past the stale baseline on **both** reps
-(5 and 7 generations); restart-from-scratch recovered on only one rep and
-failed outright on the other. On these two reps the warm-start advantage is
-steadier recovery rather than final quality — it pays a small upfront cost from the
-diversity noise (see the early part of `results/recovery.svg`) and then
-adapts steadily. Both adapted methods beat doing nothing (stale mean
-37.80). Raw curves: `results/round2_curves.csv`.
 
 ## Known limitations
 
