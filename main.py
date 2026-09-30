@@ -1,8 +1,11 @@
-"""Entry point: baselines vs GA with a strict train/test seed split.
+"""Entry point: tune per-edge circuit-breaker thresholds on a microservice
+call graph to contain cascading failures.
 
 Runs (default): fixed threshold, random search, vanilla GA, guided GA --
-each over several seeded runs. Prints a results table, saves CSV + an SVG
-convergence plot under results/.
+each over several seeded runs, minimizing
+F = cascade_size + 2*false_trips + 0.1*latency_penalty over held-out
+failure scenarios (strict train/test seed split). Prints a results table,
+saves CSV + an SVG convergence plot under results/.
 
 Round 2 mode (--round2): harder environment (higher spread probability,
 longer breaker cooldown). Compares warm-starting the GA from the Round 1
@@ -38,7 +41,11 @@ ROUND2_KW = dict(spread_p=0.45, cooldown=12, n_steps=40)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Epidemic Breakers - OptiForge 2026")
+    p = argparse.ArgumentParser(
+        description="Epidemic Breakers: tune per-edge circuit-breaker thresholds "
+        "on a microservice call graph to contain cascading failures. "
+        "Minimizes F = cascade_size + 2*false_trips + 0.1*latency_penalty "
+        "over held-out failure scenarios (train/test seed split).")
     p.add_argument("--runs", type=int, default=None,
                    help="independent runs per method (default 3; 10 with --ablation)")
     p.add_argument("--train-seeds", type=int, default=24)
@@ -50,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--quick", action="store_true", help="tiny budgets for smoke tests")
     p.add_argument("--round2", action="store_true", help="run the Round 2 shift experiment")
     p.add_argument("--round2-graph-shift", action="store_true",
-                   help="also remove ~10% of edges in the Round 2 shift")
+                   help="also remove ~10 percent of edges in the Round 2 shift")
     p.add_argument("--ablation", action="store_true",
                    help="paired guided vs vanilla GA vs random search over --runs runs")
     p.add_argument("--extended", action="store_true",
