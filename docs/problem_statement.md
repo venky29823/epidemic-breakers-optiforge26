@@ -38,21 +38,25 @@ is made without a cited source.
    steadier but the sample is two reps — not a reliability claim.
    → README "Round 2" table (reps documented there).
 
-## Extended baselines (design; results pending)
+## Extended baselines (n=3 pilot results)
 
-`--ablation --extended` (n=3 pilot, same seeds/budget per pair) adds:
+`--ablation --extended` (n=3 pilot, same seeds/budget per pair):
 
-- **random-weights GA** — non-uniform mutation, no structural signal
-  (control for the guided operator).
-- **(1+1)-ES** — elitist single-parent ES, σ=0.1, same 1,230-eval budget.
-- **calibrated** — per-edge noise amps from 24 probe sims
-  (`sqrt(3·var)` on healthy-callee steps), θ = clip(amp+0.10); margin
-  copies the oracle (not tuned); 24 probe sims, zero optimizer evals.
+| method | test F (mean ± sd) |
+|---|---|
+| calibrated | 24.19 ± 2.23 |
+| guided GA | 33.53 ± 2.54 |
+| random-weights GA | 34.65 ± 3.26 |
+| vanilla GA | 36.20 ± 2.45 |
+| random-search | 36.50 ± 4.47 |
+| (1+1)-ES | 40.00 ± 0.70 |
 
-Pre-specified contrasts: calibrated vs guided; guided vs vanilla;
-guided vs random-weights. All else exploratory. n=3 → very wide CIs;
-pilot only. → `docs/analysis_plan.md`, `results/ablation_extended.csv`
-(when the run finishes).
+Pre-specified contrasts (paired, bootstrap 95% CI): calibrated vs guided
+−9.34 [−11.72, −7.91] (calibrated better, CI excludes zero); guided vs
+vanilla +2.68 [−0.49, 4.66] (not established); guided vs random-weights
++1.13 [−2.42, 3.56] (not established). n=3 pilot — wide CIs, no claims
+beyond the intervals. → `results/ablation_extended.csv`,
+`docs/analysis_plan.md`.
 
 ## Known limits
 

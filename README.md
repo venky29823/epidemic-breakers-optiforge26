@@ -219,15 +219,27 @@ original three methods' streams are untouched). Output:
 
 | method            | train F | test F (mean ± sd, n=3) | status |
 |-------------------|---------|-------------------------|--------|
-| random-search     | —       | —                       | results pending |
-| vanilla GA        | —       | —                       | results pending |
-| guided GA         | —       | —                       | results pending |
-| random-weights GA | —       | —                       | results pending |
-| (1+1)-ES          | —       | —                       | results pending |
-| calibrated        | —       | —                       | results pending |
+| random-search     | 26.70   | 36.50 ± 4.47            | n=3 pilot |
+| vanilla GA        | 21.64   | 36.20 ± 2.45            | n=3 pilot |
+| guided GA         | 20.43   | 33.53 ± 2.54            | n=3 pilot |
+| random-weights GA | 20.77   | 34.65 ± 3.26            | n=3 pilot |
+| (1+1)-ES          | 31.67   | 40.00 ± 0.70            | n=3 pilot |
+| calibrated        | 20.03   | 24.19 ± 2.23            | n=3 pilot |
 
-No numbers are reported until `results/ablation_extended.csv` lands;
-the table will be filled from that file only.
+Source: `results/ablation_extended.csv`. Pre-specified paired contrasts
+(bootstrap 95% CI, 10,000 resamples; positive diff favors the second
+method):
+
+- **calibrated vs guided GA**: mean diff −9.34, CI [−11.72, −7.91] —
+  calibrated lower (better) in all 3 runs; CI excludes zero.
+- **guided vs vanilla GA**: mean diff +2.68, CI [−0.49, 4.66] — point
+  estimate favors guided, CI includes zero: not established.
+- **guided vs random-weights GA**: mean diff +1.13, CI [−2.42, 3.56] —
+  CI includes zero: not established.
+
+n=3 is a pilot: CIs are wide and these are not definitive. No claim is
+made beyond what the intervals support. All other pairwise comparisons
+are exploratory (see `docs/analysis_plan.md`).
 
 ## Round 2: hidden shift
 
