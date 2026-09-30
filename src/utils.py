@@ -45,6 +45,14 @@ def make_seeds(n: int, base: int) -> list[int]:
 
 
 def get_logger(name: str = "breakers") -> logging.Logger:
+    """Return a configured logger (INFO level, timestamped stderr output).
+
+    Args:
+        name: Logger name; reuses the existing logger if already configured.
+
+    Returns:
+        The configured `logging.Logger`.
+    """
     logger = logging.getLogger(name)
     if not logger.handlers:
         handler = logging.StreamHandler()
@@ -55,6 +63,14 @@ def get_logger(name: str = "breakers") -> logging.Logger:
 
 
 def ensure_dir(path: str | Path) -> Path:
+    """Create a directory (including parents) if it does not exist.
+
+    Args:
+        path: Directory path to ensure.
+
+    Returns:
+        The path as a `Path` object.
+    """
     p = Path(path)
     p.mkdir(parents=True, exist_ok=True)
     return p

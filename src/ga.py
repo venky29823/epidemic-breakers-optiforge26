@@ -25,6 +25,19 @@ from .graph_gen import edge_list
 
 @dataclass
 class GAConfig:
+    """Genetic algorithm hyperparameters.
+
+    Attributes:
+        pop_size: Number of individuals per generation.
+        generations: Number of generations to evolve.
+        tournament_k: Tournament size for parent selection.
+        crossover_rate: Probability of crossover per pair.
+        mutation_rate: Per-gene mutation probability.
+        mutation_sigma: Std dev of Gaussian mutation noise.
+        elitism: Number of best individuals carried over unchanged.
+        mutation_mode: "uniform" (each gene equally likely) or "guided"
+            (genes sampled proportional to edge-betweenness weights).
+    """
     pop_size: int = 30
     generations: int = 40
     tournament_k: int = 3
@@ -209,6 +222,14 @@ def run_ga(
                               config.init_lo, config.init_hi)
 
     def batch_fitness(p: np.ndarray) -> np.ndarray:
+        """Evaluate a population's fitness on train seeds.
+
+        Args:
+            p: Population array, shape (pop_size, n_edges), thresholds in [0, 1].
+
+        Returns:
+            Array of mean-F values, one per individual (lower is better).
+        """
         return np.array(
             [fitmod.evaluate(graph, ind, train_seeds,
                              w_false_trips=w_false_trips, w_latency=w_latency,

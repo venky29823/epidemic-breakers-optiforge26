@@ -41,6 +41,12 @@ ROUND2_KW = dict(spread_p=0.45, cooldown=12, n_steps=40)
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser.
+
+    Returns:
+        Configured `ArgumentParser` with all run-mode flags (--runs,
+        --ablation, --extended, --round2, etc.).
+    """
     p = argparse.ArgumentParser(
         description="Epidemic Breakers: tune per-edge circuit-breaker thresholds "
         "on a microservice call graph to contain cascading failures. "
@@ -68,6 +74,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def summarise(method: str, run: int, res: dict, train_f: float, secs: float) -> dict:
+    """Flatten one method-run result into a CSV/print row.
+
+    Args:
+        method: Method name (e.g. "guided GA").
+        run: Zero-based run index.
+        res: Result dict from the optimizer (must contain "test" sub-dict).
+        train_f: Train-seed mean F for this run.
+        secs: Wall-clock seconds for this run.
+
+    Returns:
+        Dict with rounded test-F stats, component means, eval counts.
+    """
     t = res["test"]
     return {
         "method": method,
@@ -85,6 +103,12 @@ def summarise(method: str, run: int, res: dict, train_f: float, secs: float) -> 
 
 
 def print_table(rows: list[dict], title: str) -> None:
+    """Print a formatted results table to stdout.
+
+    Args:
+        rows: List of summarise() dicts.
+        title: Table heading printed above the rows.
+    """
     print(f"\n{title}")
     print("-" * 108)
     hdr = (f"{'method':<16}{'run':<5}{'test F':<16}{'cascade':<10}"
@@ -100,6 +124,14 @@ def print_table(rows: list[dict], title: str) -> None:
 
 
 def run_comparison(args) -> list[dict]:
+    """Run the Round-1 comparison: fixed, random search, vanilla GA, guided GA.
+
+    Args:
+        args: Parsed CLI args (seeds, budgets, outdir).
+
+    Returns:
+        List of summarise() dicts, one per method-run.
+    """
     G = graph_gen.generate_service_graph(n_nodes=40, seed=7)
     n_edges = G.number_of_edges()
     log.info("graph: %d nodes, %d edges", G.number_of_nodes(), n_edges)
@@ -445,6 +477,7 @@ def _ablation_row(method: str, run: int, train_f: float, test: dict,
 
 
 def main() -> None:
+    """CLI entry point: dispatch to comparison, ablation, or Round-2 mode."""
     args = build_parser().parse_args()
     if args.quick:  # tiny budgets for smoke tests
         args.pop, args.gens = 8, 6
