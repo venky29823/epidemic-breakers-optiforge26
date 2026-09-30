@@ -80,7 +80,7 @@ results/           # CSV tables + convergence plot (generated)
 
 ```bash
 pip install -r requirements.txt   # numpy, networkx, pytest
-pytest tests/ -q                  # 27 tests
+pytest tests/ -q                  # 35 tests
 python3 main.py                   # full comparison (~20 min, 3 runs/method)
 python3 main.py --ablation        # paired ablation, 10 runs/method (~60 min)
 python3 main.py --quick           # smoke test (~15 s)
@@ -92,39 +92,20 @@ python3 main.py --round2          # Round 2 shift experiment
 
 ## Demo
 
-Two demos, different trade-offs:
-
-- **Static site** (recommended for sharing):
-  <https://venky29823.github.io/epidemic-breakers-web/> — zero-dependency
-  HTML/CSS/vanilla-JS in the
-  [epidemic-breakers-web](https://github.com/venky29823/epidemic-breakers-web)
-  repo. It **re-implements the simulator in JavaScript** (`sim.js`: cascade
-  dynamics, fitness, edge betweenness, and a small in-browser GA) and bakes
-  in **precomputed data exported from this repo** — the exact 40-node /
-  111-edge graph, its per-edge noise/spread parameters, and the
-  GA-optimized thresholds (`data/*.json`). `scripts/check_web_parity.py`
-  verifies the baked-in constants agree with the Python source of truth
-  (graph size, edge identity/order, per-edge params, best_theta, sim
-  defaults); known differences are documented in that script's output
-  (JS vs numpy RNG streams differ, so single-scenario trajectories differ —
-  parity is statistical).
-- **Streamlit app** (`streamlit_app.py` in this repo): the same simulator
-  running live in Python. Run locally with
-  `pip install -r requirements.txt && streamlit run streamlit_app.py`,
-  or host free on [Streamlit Community Cloud](https://share.streamlit.io)
-  (repo `venky29823/epidemic-breakers-optiforge26`, branch `main`, main
-  file `streamlit_app.py`).
-
-> **Note for the website repo** (`epidemic-breakers-web`, updated
-> separately — do not edit it from here): its oracle wording still calls
-> the oracle an "information-theoretic ceiling". To match the canonical
-> definition used in this repo, change these exact strings in
-> `epidemic-breakers-web/index.html`:
->
-> 1. `Oracle (noise&nbsp;+&nbsp;0.1)` → `Oracle reference (hidden noise + 0.10)`
-> 2. `Oracle: θ set just above each edge's true noise amplitude — the information-theoretic ceiling, unavailable to any real tuner.`
->    →
->    `Oracle reference: θ_e = clip(noise_amp_e + 0.10, 0, 1), a heuristic using hidden per-edge noise values. It is not available to any real tuner and is not a ceiling.`
+The static site (recommended for sharing):
+<https://epidemic-breakers-web-15saicharan-3220s-projects.vercel.app/> —
+zero-dependency HTML/CSS/vanilla-JS in the
+[epidemic-breakers-web](https://github.com/venky29823/epidemic-breakers-web)
+repo. It **re-implements the simulator in JavaScript** (`sim.js`: cascade
+dynamics, fitness, edge betweenness, and a small in-browser GA) and bakes
+in **precomputed data exported from this repo** — the exact 40-node /
+111-edge graph, its per-edge noise/spread parameters, and the
+GA-optimized thresholds (`data/*.json`). `scripts/check_web_parity.py`
+verifies the baked-in constants agree with the Python source of truth
+(graph size, edge identity/order, per-edge params, best_theta, sim
+defaults); known differences are documented in that script's output
+(JS vs numpy RNG streams differ, so single-scenario trajectories differ —
+parity is statistical).
 
 Pick a threshold strategy (fixed slider, precomputed GA-optimized, or the
 oracle reference), tweak spread probability / cooldown / noise, and watch
@@ -133,15 +114,17 @@ comparison on fresh seeds.
 
 ## Results (Round 1)
 
-Held-out test seeds, 3 independent runs per method (1,230 evals each).
-Lower F is better.
+Fresh full run, 2026-09-30 (`results/round1_results.csv`): 3 independent
+runs per method (1,230 evals each), 24 train seeds (base 1000) / 12 held-out
+test seeds (base 2000). Lower F is better. Test F is reported as mean ±
+sample sd (ddof=1) over the held-out test scenarios.
 
-| method        | test F (mean ± sd) | vs fixed-0.5 |
-|---------------|--------------------|--------------|
-| fixed-0.5     | 40.56              | —            |
-| random search | 35.35 ± 1.38       | −13%         |
-| vanilla GA    | 35.68 ± 2.59       | −12%         |
-| guided GA     | 33.28 ± 1.24       | −18%         |
+| method        | test F (mean ± sd, n=3) | vs fixed-0.5 |
+|---------------|-------------------------|--------------|
+| fixed-0.5     | 40.56                   | —            |
+| random search | 35.35 ± 1.69            | −13%         |
+| vanilla GA    | 35.68 ± 3.17            | −12%         |
+| guided GA     | 33.28 ± 1.51            | −18%         |
 
 What the numbers actually say:
 
@@ -180,8 +163,9 @@ See `results/round1_results.csv` and `results/convergence.svg`.
 
 ### Ablation (paired, n=10)
 
-`python3 main.py --ablation --outdir results` (~60 min). Same train/test
-seeds and evaluation budget per pair; raw per-run values in
+`python3 main.py --ablation --outdir results` (~60 min). Same 24 train /
+12 test seeds and evaluation budget per pair (fresh seed bases per run:
+train base 1000+run, test base 2000+run); raw per-run values in
 `results/ablation.csv`, summary in `results/ablation_summary.csv`.
 
 | method        | train F | test F (mean ± sd) |
@@ -236,16 +220,14 @@ adapts steadily. Both adapted methods beat doing nothing (stale mean
   margin itself is arbitrary: margin 0 scores 23.15 ± 9.72, slightly
   better than the canonical +0.10 (24.74 ± 10.48) on the same 24 test
   seeds. Don't over-interpret the exact margin.
-- **Round-1 table provenance**: the table's figures (incl. fixed-0.5 =
-  40.56) come from the original full run, whose per-run CSVs were
-  overwritten by `--quick` smoke runs before the initial commit and are
-  no longer in the repo. Re-evaluating fixed-0.5 today on the documented
-  24 test seeds (base 2000) gives 37.70 ± 11.29, so the original run's
-  exact seed/code setup is not fully recoverable — treat 40.56 as that
-  run's reported figure, and use the same-seed re-evaluations
-  (37.70 ± 11.29 vs oracle 24.74 ± 10.48) for apples-to-apples claims.
-  `python3 main.py --outdir results` regenerates the table from scratch
-  (~20 min, deterministic seeds).
+- **Round-1 table provenance**: the table now comes from a fresh full run
+  (2026-09-30, `results/round1_results.csv`, deterministic seeds). The
+  original run's per-run CSVs were overwritten by `--quick` smoke runs
+  before the initial commit, but the fresh run reproduces the original
+  figures' means to 2 decimals (incl. fixed-0.5 = 40.56 on the 12 test
+  seeds), so the table stands on the new run. An earlier same-seed
+  re-evaluation on 24 test seeds gave fixed-0.5 = 37.70 ± 11.29 vs oracle
+  24.74 ± 10.48 — use those for apples-to-apples claims at n=24.
 - **Shifts tested**: environment shift (spread 0.25→0.45, cooldown 5→12)
   and edge-removal shift (`--round2-graph-shift`, ~10% of edges). Other
   shift types (new services, correlated noise, weight changes) are
