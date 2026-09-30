@@ -141,7 +141,7 @@ def mutate(
     """
     child = ind.copy()
     n = len(ind)
-    if mode == "guided" and weights is not None:
+    if mode in ("guided", "random-weights") and weights is not None:
         k = int(rng.binomial(n, rate))
         idx = rng.choice(n, size=min(max(k, 1), n), replace=False, p=weights)
     else:
@@ -180,7 +180,18 @@ def run_ga(
     ``w_false_trips`` / ``w_latency`` reweight the objective.
     """
     n_edges = graph.number_of_edges()
-    weights = edge_weights(graph) if config.mutation_mode == "guided" else None
+    if config.mutation_mode == "guided":
+        weights = edge_weights(graph)
+    elif config.mutation_mode == "random-weights":
+        # Control: non-uniform mutation weights with NO structural signal.
+        # If guided beats this, the win comes from the betweenness prior,
+        # not from non-uniformity alone.
+        w = rng.random(n_edges)
+        weights = w / w.sum()
+    elif config.mutation_mode == "uniform":
+        weights = None
+    else:
+        raise ValueError(f"unknown mutation_mode: {config.mutation_mode!r}")
 
     if init_pop is not None:
         if init_edges is not None and list(init_edges) != edge_list(graph):

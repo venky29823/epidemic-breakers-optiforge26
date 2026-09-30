@@ -75,6 +75,7 @@ def _run(
     n_steps: int,
     ema_alpha: float,
     record_history: bool = False,
+    record_obs: bool = False,
 ) -> dict:
     n = A.shape[0]
     rng = np.random.default_rng(seed)
@@ -91,6 +92,8 @@ def _run(
     open_edge_steps = 0
     n_edges = int(A.sum())
     slow_history: list[int] = []
+    obs_history: list[np.ndarray] = []
+    slow_vec_history: list[np.ndarray] = []
 
     for _ in range(n_steps):
         # 1. spread along closed edges: callers of slow callees, per-edge p
@@ -113,6 +116,9 @@ def _run(
         open_timer[open_timer > 0] -= 1
         if record_history:
             slow_history.append(int(slow.sum()))
+        if record_obs:
+            obs_history.append(observed.copy())
+            slow_vec_history.append(slow.copy())
 
     cascade_size = int(slow.sum())
     latency_penalty = 100.0 * open_edge_steps / max(1, n_edges * n_steps)
@@ -125,6 +131,9 @@ def _run(
     }
     if record_history:
         out["slow_history"] = slow_history
+    if record_obs:
+        out["obs_history"] = obs_history
+        out["slow_vec_history"] = slow_vec_history
     return out
 
 
@@ -159,17 +168,22 @@ def simulate(
     ema_alpha: float = 0.3,
     heterogeneous: bool = True,
     record_history: bool = False,
+    record_obs: bool = False,
 ) -> dict:
     """Run one failure scenario. ``theta`` has one value per graph edge.
 
     With ``record_history=True`` the returned dict also carries
     ``slow_history``: the number of slow services after each step.
+    With ``record_obs=True`` it also carries ``obs_history`` (the noisy
+    per-edge observation matrix per step) and ``slow_vec_history`` (the
+    per-service slow vector per step) -- used to calibrate heuristics
+    from observables without touching hidden per-edge parameters.
     """
     A, edges, theta, noise_mat, p_mat = _prepare(
         graph, theta, noise_amp, spread_p, heterogeneous
     )
     return _run(A, edges, theta, noise_mat, p_mat, seed,
-                cooldown, n_steps, ema_alpha, record_history)
+                cooldown, n_steps, ema_alpha, record_history, record_obs)
 
 
 def simulate_many(

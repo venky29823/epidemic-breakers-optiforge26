@@ -17,6 +17,7 @@ import time
 import numpy as np
 
 from src import baselines as blmod
+from src import es as esmod
 from src import fitness as fitmod
 from src import ga as gamod
 from src import graph_gen
@@ -52,6 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="also remove ~10% of edges in the Round 2 shift")
     p.add_argument("--ablation", action="store_true",
                    help="paired guided vs vanilla GA vs random search over --runs runs")
+    p.add_argument("--extended", action="store_true",
+                   help="with --ablation: also run random-weights GA, "
+                        "(1+1)-ES and calibrated-noise baselines; writes "
+                        "ablation_extended.csv instead of ablation.csv")
     return p
 
 
@@ -285,17 +290,31 @@ def run_ablation(args) -> list[dict]:
     rows -- train F, test F and test-F std for each method's final theta,
     i.e. the train/test diagnostic -- to ``results/ablation.csv`` and the
     summary to ``results/ablation_summary.csv``.
+
+    With ``--extended``, three more baselines join the same paired design
+    (fresh RNG offsets, so the original three methods' streams -- and
+    results -- are untouched): a random-weights GA control (non-uniform
+    mutation with no structural signal), a (1+1)-ES, and a calibrated
+    noise heuristic fitted from probe observables. Extended output goes
+    to ``results/ablation_extended.csv`` /
+    ``results/ablation_extended_summary.csv``.
     """
     G = graph_gen.generate_service_graph(n_nodes=40, seed=7)
     log.info("graph: %d nodes, %d edges", G.number_of_nodes(),
              G.number_of_edges())
     n_runs = args.runs
+    extended = args.extended
     budget = args.pop * (args.gens + 1)  # == GA evals: initial pop + one per gen
     cfg_v = gamod.GAConfig(pop_size=args.pop, generations=args.gens,
                            mutation_mode="uniform")
     cfg_g = gamod.GAConfig(pop_size=args.pop, generations=args.gens,
                            mutation_mode="guided")
+    cfg_rw = gamod.GAConfig(pop_size=args.pop, generations=args.gens,
+                            mutation_mode="random-weights")
     methods = ["random-search", "vanilla GA", "guided GA"]
+    if extended:
+        methods += ["random-weights GA", "(1+1)-ES", "calibrated"]
+    prefix = "ablation_extended" if extended else "ablation"
 
     rows: list[dict] = []
     for run in range(n_runs):
@@ -309,42 +328,78 @@ def run_ablation(args) -> list[dict]:
         rows.append(_ablation_row("random-search", run, rs["train_F"],
                                   rs["test"], rs["evals"], time.time() - t0))
 
-        for name, cfg in (("vanilla GA", cfg_v), ("guided GA", cfg_g)):
+        for name, cfg, off in (("vanilla GA", cfg_v, 0),
+                               ("guided GA", cfg_g, 1)):
             t0 = time.time()
-            ga_rng = make_rng(args.seed + 6000 + run * 10
-                              + (0 if name == "vanilla GA" else 1))
+            ga_rng = make_rng(args.seed + 6000 + run * 10 + off)
             res = gamod.run_ga(G, train_seeds, cfg, ga_rng, **ROUND1_KW)
             test = fitmod.evaluate(G, res["best"], test_seeds, **ROUND1_KW)
             rows.append(_ablation_row(name, run, res["best_F"], test,
                                       res["evals"], time.time() - t0))
+
+        if extended:
+            t0 = time.time()
+            rw_rng = make_rng(args.seed + 6000 + run * 10 + 2)
+            rw_res = gamod.run_ga(G, train_seeds, cfg_rw, rw_rng, **ROUND1_KW)
+            rw_test = fitmod.evaluate(G, rw_res["best"], test_seeds,
+                                      **ROUND1_KW)
+            rows.append(_ablation_row("random-weights GA", run,
+                                      rw_res["best_F"], rw_test,
+                                      rw_res["evals"], time.time() - t0))
+
+            t0 = time.time()
+            es_res = esmod.run_es(G, train_seeds, budget,
+                                  make_rng(args.seed + 6000 + run * 10 + 3),
+                                  **ROUND1_KW)
+            es_test = fitmod.evaluate(G, es_res["best"], test_seeds,
+                                      **ROUND1_KW)
+            rows.append(_ablation_row("(1+1)-ES", run, es_res["best_F"],
+                                      es_test, es_res["evals"],
+                                      time.time() - t0))
+
+            t0 = time.time()
+            theta_cal = blmod.calibrated_thresholds(G, train_seeds,
+                                                    **ROUND1_KW)
+            train_cal = fitmod.evaluate(G, theta_cal, train_seeds,
+                                        **ROUND1_KW)
+            test_cal = fitmod.evaluate(G, theta_cal, test_seeds, **ROUND1_KW)
+            # evals for calibrated = probe simulations, not optimizer evals
+            rows.append(_ablation_row("calibrated", run, train_cal["F"],
+                                      test_cal, len(train_seeds),
+                                      time.time() - t0))
         log.info("ablation run %d/%d done", run + 1, n_runs)
 
     test_f = {m: np.array([r["test_F"] for r in rows if r["method"] == m])
               for m in methods}
     train_f = {m: np.array([r["train_F"] for r in rows if r["method"] == m])
                for m in methods}
-    diffs = test_f["vanilla GA"] - test_f["guided GA"]  # > 0 favours guided
-    d_mean, d_lo, d_hi = paired_bootstrap_ci(
-        diffs, rng=make_rng(args.seed + 777))
+    pairs = ([("vanilla GA", "guided GA")] if not extended
+             else [(m, "guided GA") for m in methods if m != "guided GA"])
+    pair_stats = []
+    for a, b in pairs:
+        diffs_ab = test_f[a] - test_f[b]  # > 0 favours b (guided)
+        d_mean, d_lo, d_hi = paired_bootstrap_ci(
+            diffs_ab, rng=make_rng(args.seed + 777 + len(pair_stats)))
+        d_sd = diffs_ab.std(ddof=1) if n_runs > 1 else 0.0
+        n_pos = int((diffs_ab > 0).sum())
+        pair_stats.append((a, b, d_mean, d_lo, d_hi, d_sd, n_pos))
 
     print(f"\nABLATION: paired runs, equal budget ({budget} evals each)")
     print("-" * 78)
-    print(f"{'method':<15}{'n':<4}{'train F':<10}{'test F (mean ± sd)':<22}")
+    print(f"{'method':<17}{'n':<4}{'train F':<10}{'test F (mean ± sd)':<22}")
     print("-" * 78)
     for m in methods:
         sd = test_f[m].std(ddof=1) if n_runs > 1 else 0.0
-        print(f"{m:<15}{n_runs:<4}{train_f[m].mean():<10.2f}"
+        print(f"{m:<17}{n_runs:<4}{train_f[m].mean():<10.2f}"
               f"{test_f[m].mean():.2f} ± {sd:.2f}")
     print("-" * 78)
-    d_sd = diffs.std(ddof=1) if n_runs > 1 else 0.0
-    print(f"paired (vanilla - guided) test F: mean {d_mean:.2f}, sd {d_sd:.2f}")
-    print(f"paired bootstrap 95% CI for the mean difference: "
-          f"[{d_lo:.2f}, {d_hi:.2f}]  (positive favours guided)")
-    n_pos = int((diffs > 0).sum())
-    print(f"guided won {n_pos}/{n_runs} paired runs")
+    for a, b, d_mean, d_lo, d_hi, d_sd, n_pos in pair_stats:
+        print(f"paired ({a} - {b}) test F: mean {d_mean:.2f}, sd {d_sd:.2f}; "
+              f"bootstrap 95% CI [{d_lo:.2f}, {d_hi:.2f}] "
+              f"(positive favours {b}); {b} won {n_pos}/{n_runs}")
 
     outdir = ensure_dir(args.outdir)
-    write_csv(outdir / "ablation.csv", rows, list(rows[0].keys()))
+    write_csv(outdir / f"{prefix}.csv", rows, list(rows[0].keys()))
     summary = [
         {"method": m, "n_runs": n_runs,
          "mean_train_F": round(float(train_f[m].mean()), 3),
@@ -353,17 +408,18 @@ def run_ablation(args) -> list[dict]:
          "paired_diff_mean": "", "paired_diff_ci_lo": "", "paired_diff_ci_hi": ""}
         for m in methods
     ]
-    summary.append({"method": "paired: vanilla - guided", "n_runs": n_runs,
-                    "mean_train_F": "", "mean_test_F": "",
-                    "sd_test_F": round(float(d_sd), 3),
-                    "paired_diff_mean": round(d_mean, 3),
-                    "paired_diff_ci_lo": round(d_lo, 3),
-                    "paired_diff_ci_hi": round(d_hi, 3)})
-    write_csv(outdir / "ablation_summary.csv", summary,
+    for a, b, d_mean, d_lo, d_hi, d_sd, _n in pair_stats:
+        summary.append({"method": f"paired: {a} - {b}", "n_runs": n_runs,
+                        "mean_train_F": "", "mean_test_F": "",
+                        "sd_test_F": round(float(d_sd), 3),
+                        "paired_diff_mean": round(d_mean, 3),
+                        "paired_diff_ci_lo": round(d_lo, 3),
+                        "paired_diff_ci_hi": round(d_hi, 3)})
+    write_csv(outdir / f"{prefix}_summary.csv", summary,
               ["method", "n_runs", "mean_train_F", "mean_test_F", "sd_test_F",
                "paired_diff_mean", "paired_diff_ci_lo", "paired_diff_ci_hi"])
-    log.info("wrote %s, %s", outdir / "ablation.csv",
-             outdir / "ablation_summary.csv")
+    log.info("wrote %s, %s", outdir / f"{prefix}.csv",
+             outdir / f"{prefix}_summary.csv")
     return rows
 
 

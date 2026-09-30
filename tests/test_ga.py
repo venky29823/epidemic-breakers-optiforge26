@@ -92,3 +92,21 @@ def test_init_population_respects_range():
     pop = ga.init_population(G.number_of_edges(), 20, make_rng(9), lo=0.2, hi=0.7)
     assert pop.shape == (20, G.number_of_edges())
     assert np.all(pop >= 0.2) and np.all(pop <= 0.7)
+
+
+def test_random_weights_mode_is_nonuniform_and_runs():
+    """'random-weights' mutation: completes a run and is a real control.
+
+    It must differ from both uniform and guided runs given the same RNG
+    seed (different mutation distributions), and stay within [0, 1].
+    """
+    G, _ = _tiny()
+    seeds = [201, 202]
+    kw = dict(n_steps=10, noise_amp=0.3, spread_p=0.25)
+    cfg_rw = ga.GAConfig(pop_size=8, generations=3, mutation_mode="random-weights")
+    cfg_g = ga.GAConfig(pop_size=8, generations=3, mutation_mode="guided")
+    r_rw = ga.run_ga(G, seeds, cfg_rw, make_rng(5), **kw)
+    r_g = ga.run_ga(G, seeds, cfg_g, make_rng(5), **kw)
+    assert r_rw["evals"] == 8 * 4
+    assert np.all((r_rw["best"] >= 0.0) & (r_rw["best"] <= 1.0))
+    assert not np.array_equal(r_rw["best"], r_g["best"])
