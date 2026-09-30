@@ -32,7 +32,7 @@ def scenario_cost(
 
 def evaluate(
     graph: nx.DiGraph,
-    theta,
+    theta: np.ndarray,
     seeds: list[int],
     w_false_trips: float = W_FALSE_TRIPS,
     w_latency: float = W_LATENCY,

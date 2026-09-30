@@ -159,7 +159,7 @@ def _prepare(graph: nx.DiGraph, theta, noise_amp: float, spread_p: float,
 
 def simulate(
     graph: nx.DiGraph,
-    theta,
+    theta: np.ndarray,
     seed: int,
     spread_p: float = 0.25,
     cooldown: int = 5,
@@ -188,8 +188,8 @@ def simulate(
 
 def simulate_many(
     graph: nx.DiGraph,
-    theta,
-    seeds,
+    theta: np.ndarray,
+    seeds: list[int],
     **kwargs,
 ) -> list[dict]:
     """Run many scenarios, reusing matrices. Deterministic given the seeds."""

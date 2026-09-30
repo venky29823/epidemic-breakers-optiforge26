@@ -36,8 +36,8 @@ from src.utils import (
 
 log = get_logger()
 
-ROUND1_KW = dict(spread_p=0.25, cooldown=5, n_steps=40)
-ROUND2_KW = dict(spread_p=0.45, cooldown=12, n_steps=40)
+ROUND1_KW = {'spread_p': 0.25, 'cooldown': 5, 'n_steps': 40}
+ROUND2_KW = {'spread_p': 0.45, 'cooldown': 12, 'n_steps': 40}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -119,7 +119,7 @@ def print_table(rows: list[dict], title: str) -> None:
         fstr = f"{r['test_F_mean']:.2f} +/- {r['test_F_std']:.2f}"
         print(f"{r['method']:<16}{r['run']:<5}{fstr:<16}{r['cascade_size']:<10.1f}"
               f"{r['false_trips']:<8.1f}{r['latency_penalty']:<10.1f}"
-              f"{str(r['gens_to_target']):<10}{r['secs']:<6.1f}")
+              f"{r['gens_to_target']!s:<10}{r['secs']:<6.1f}")
     print("-" * 108)
 
 
@@ -205,7 +205,7 @@ def run_round2(args) -> list[dict]:
     if args.round2_graph_shift:
         grng = make_rng(args.seed + 999)
         G2 = G.copy()
-        n_remove = max(1, int(round(0.10 * len(old_edges))))
+        n_remove = max(1, round(0.10 * len(old_edges)))
         drop = grng.choice(len(old_edges), size=n_remove, replace=False)
         for i in sorted(drop, reverse=True):
             G2.remove_edge(*old_edges[i])

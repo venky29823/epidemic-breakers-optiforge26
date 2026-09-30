@@ -35,7 +35,7 @@ def test_oracle_margin_parameter():
 def test_calibrated_thresholds_shape_range_and_determinism():
     """Calibrated heuristic: one theta per edge in [0,1], deterministic."""
     G = _small()
-    kw = dict(n_steps=10, noise_amp=0.3, spread_p=0.25)
+    kw = {'n_steps': 10, 'noise_amp': 0.3, 'spread_p': 0.25}
     th1 = baselines.calibrated_thresholds(G, [11, 12, 13], **kw)
     th2 = baselines.calibrated_thresholds(G, [11, 12, 13], **kw)
     assert th1.shape == (len(edge_list(G)),)

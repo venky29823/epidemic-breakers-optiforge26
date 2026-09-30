@@ -34,7 +34,7 @@ N_TEST = 12
 SEED = 42
 POP = 30
 GENS = 40
-ROUND1_KW = dict(n_steps=40, noise_amp=0.3, spread_p=0.25, cooldown=5)
+ROUND1_KW = {'n_steps': 40, 'noise_amp': 0.3, 'spread_p': 0.25, 'cooldown': 5}
 
 
 def paired_bootstrap_ci(diffs, n_boot=10000, seed=0):
@@ -49,7 +49,7 @@ def paired_bootstrap_ci(diffs, n_boot=10000, seed=0):
 def main():
     G = graph_gen.generate_service_graph(n_nodes=40, seed=7)
     n_edges = G.number_of_edges()
-    budget = POP * (GENS + 1)  # 1,230 evals, same as the GA baselines
+    # budget = POP * (GENS + 1)  # 1,230 evals, same as the GA baselines
     cfg = gamod.GAConfig(pop_size=POP, generations=GENS,
                          mutation_mode="guided")
 
@@ -88,8 +88,8 @@ def main():
     print(f"wrote {out}")
 
     # Paired comparison vs calibrated-only and guided GA (from extended CSV).
-    ext = list(csv.DictReader(
-        open(REPO / "results" / "ablation_extended.csv")))
+    with open(REPO / "results" / "ablation_extended.csv") as f:
+        ext = list(csv.DictReader(f))
     test_f = {m: np.array([float(r["test_F"]) for r in ext
                            if r["method"] == m])
               for m in ("calibrated", "guided GA")}

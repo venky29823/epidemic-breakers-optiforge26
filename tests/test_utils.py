@@ -1,5 +1,4 @@
 """Tests for utils: seeding helpers and the paired bootstrap CI."""
-import numpy as np
 import pytest
 
 from src.utils import make_rng, paired_bootstrap_ci

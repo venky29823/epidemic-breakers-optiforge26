@@ -25,7 +25,7 @@ def fixed_threshold(
     """One constant threshold on every edge. Evaluated on train and test."""
     n_edges = graph.number_of_edges()
     theta = np.full(n_edges, theta_value)
-    kw = dict(w_false_trips=w_false_trips, w_latency=w_latency)
+    kw = {'w_false_trips': w_false_trips, 'w_latency': w_latency}
     train = fitmod.evaluate(graph, theta, train_seeds, **kw, **sim_kwargs)
     test = fitmod.evaluate(graph, theta, test_seeds, **kw, **sim_kwargs)
     return {
@@ -56,7 +56,7 @@ def random_search(
     optimizer, not the prior.
     """
     n_edges = graph.number_of_edges()
-    kw = dict(w_false_trips=w_false_trips, w_latency=w_latency)
+    kw = {'w_false_trips': w_false_trips, 'w_latency': w_latency}
     best, best_f = None, float("inf")
     for _ in range(budget):
         theta = rng.uniform(init_lo, init_hi, n_edges)

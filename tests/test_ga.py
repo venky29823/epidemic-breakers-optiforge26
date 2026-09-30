@@ -1,4 +1,6 @@
 """Tests for the genetic algorithm."""
+import itertools
+
 import numpy as np
 
 from src import ga
@@ -13,7 +15,7 @@ def _tiny():
 
 
 def _cfg(**kw):
-    base = dict(pop_size=10, generations=8, mutation_mode="uniform")
+    base = {"pop_size": 10, "generations": 8, "mutation_mode": "uniform"}
     base.update(kw)
     return ga.GAConfig(**base)
 
@@ -23,7 +25,7 @@ def test_history_nonincreasing_with_elitism():
     res = ga.run_ga(G, seeds, _cfg(), make_rng(1))
     hist = res["history"]
     assert len(hist) == 9  # initial + 8 generations
-    assert all(b <= a + 1e-12 for a, b in zip(hist, hist[1:]))
+    assert all(b <= a + 1e-12 for a, b in itertools.pairwise(hist))
 
 
 def test_genes_stay_in_bounds():
@@ -102,7 +104,7 @@ def test_random_weights_mode_is_nonuniform_and_runs():
     """
     G, _ = _tiny()
     seeds = [201, 202]
-    kw = dict(n_steps=10, noise_amp=0.3, spread_p=0.25)
+    kw = {'n_steps': 10, 'noise_amp': 0.3, 'spread_p': 0.25}
     cfg_rw = ga.GAConfig(pop_size=8, generations=3, mutation_mode="random-weights")
     cfg_g = ga.GAConfig(pop_size=8, generations=3, mutation_mode="guided")
     r_rw = ga.run_ga(G, seeds, cfg_rw, make_rng(5), **kw)

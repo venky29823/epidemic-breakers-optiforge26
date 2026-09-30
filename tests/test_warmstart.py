@@ -13,7 +13,7 @@ def _tiny():
 
 
 def _cfg(**kw):
-    base = dict(pop_size=8, generations=4, mutation_mode="guided")
+    base = {"pop_size": 8, "generations": 4, "mutation_mode": "guided"}
     base.update(kw)
     return ga.GAConfig(**base)
 

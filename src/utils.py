@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import csv
 import logging
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -115,13 +115,13 @@ def save_convergence_svg(
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
         f'<rect width="{width}" height="{height}" fill="white"/>',
-        f'<text x="{width/2}" y="22" text-anchor="middle" font-size="15" '
-        f'font-family="sans-serif">{title}</text>',
-        f'<text x="{margin["l"] - 50}" y="{margin["t"] + ih/2}" text-anchor="middle" '
-        f'font-size="12" font-family="sans-serif" '
-        f'transform="rotate(-90 {margin["l"] - 50} {margin["t"] + ih/2})">{ylabel}</text>',
-        f'<text x="{margin["l"] + iw/2}" y="{height - 12}" text-anchor="middle" '
-        f'font-size="12" font-family="sans-serif">{xlabel}</text>',
+        (f'<text x="{width/2}" y="22" text-anchor="middle" font-size="15" '
+         f'font-family="sans-serif">{title}</text>'),
+        (f'<text x="{margin["l"] - 50}" y="{margin["t"] + ih/2}" text-anchor="middle" '
+         f'font-size="12" font-family="sans-serif" '
+         f'transform="rotate(-90 {margin["l"] - 50} {margin["t"] + ih/2})">{ylabel}</text>'),
+        (f'<text x="{margin["l"] + iw/2}" y="{height - 12}" text-anchor="middle" '
+         f'font-size="12" font-family="sans-serif">{xlabel}</text>'),
     ]
     # y gridlines + labels
     for gi in range(5):

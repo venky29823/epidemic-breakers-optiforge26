@@ -27,7 +27,7 @@ def test_es_respects_budget_and_never_worsens():
 def test_es_deterministic_given_rng():
     G = _tiny()
     seeds = [101, 102]
-    kw = dict(budget=25, n_steps=10, noise_amp=0.3, spread_p=0.25)
+    kw = {'budget': 25, 'n_steps': 10, 'noise_amp': 0.3, 'spread_p': 0.25}
     r1 = esmod.run_es(G, seeds, rng=make_rng(7), **kw)
     r2 = esmod.run_es(G, seeds, rng=make_rng(7), **kw)
     assert r1["best_F"] == r2["best_F"]

@@ -33,9 +33,9 @@ import numpy as np
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from src import graph_gen  # noqa: E402
-from src.graph_gen import edge_list  # noqa: E402
-from src.simulator import _per_edge_params  # noqa: E402
+from src import graph_gen
+from src.graph_gen import edge_list
+from src.simulator import _per_edge_params
 
 PASS, FAIL = "PASS", "FAIL"
 

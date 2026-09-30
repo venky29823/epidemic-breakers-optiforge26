@@ -7,12 +7,13 @@ the GA, so any gap vs the GA reflects the algorithm, not the budget.
 """
 from __future__ import annotations
 
+import networkx as nx
 import numpy as np
 
 from src import fitness as fitmod
 
 
-def run_es(graph, train_seeds, budget: int, rng: np.random.Generator,
+def run_es(graph: nx.DiGraph, train_seeds: list[int], budget: int, rng: np.random.Generator,
            sigma: float = 0.08, init_lo: float = 0.2, init_hi: float = 0.7,
            **sim_kwargs) -> dict:
     """Run a (1+1)-ES for ``budget`` fitness evaluations.

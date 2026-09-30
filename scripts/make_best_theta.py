@@ -22,12 +22,12 @@ import numpy as np
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from main import ROUND1_KW  # noqa: E402
-from src import fitness as fitmod  # noqa: E402
-from src import ga as gamod  # noqa: E402
-from src import graph_gen  # noqa: E402
-from src.graph_gen import edge_list  # noqa: E402
-from src.utils import ensure_dir, make_rng, make_seeds  # noqa: E402
+from main import ROUND1_KW
+from src import fitness as fitmod
+from src import ga as gamod
+from src import graph_gen
+from src.graph_gen import edge_list
+from src.utils import ensure_dir, make_rng, make_seeds
 
 TRAIN_N, TRAIN_BASE = 24, 1000
 TEST_N, TEST_BASE = 12, 2000
@@ -40,7 +40,7 @@ def git_sha() -> str:
             ["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True,
             text=True, check=True,
         ).stdout.strip()
-    except Exception:
+    except Exception:  # noqa: BLE001 -- git may fail in many ways; "unknown" is fine
         return "unknown"
 
 

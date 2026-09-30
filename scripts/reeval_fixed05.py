@@ -26,7 +26,7 @@ from src.fitness import W_FALSE_TRIPS, W_LATENCY, scenario_cost, simulate_many
 from src.utils import make_seeds
 
 # Must match main.py ROUND1_KW and graph construction.
-SIM_KW = dict(spread_p=0.25, cooldown=5, n_steps=40)
+SIM_KW = {'spread_p': 0.25, 'cooldown': 5, 'n_steps': 40}
 
 
 def main() -> None:
