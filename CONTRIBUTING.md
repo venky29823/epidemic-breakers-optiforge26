@@ -9,7 +9,8 @@ pytest tests/ -q
 
 All 35 tests must pass before a pull request. Tests cover the simulator,
 fitness computation, GA operators, and regression defaults (see
-`tests/test_regression_defaults.py`).
+`tests/test_regression_defaults.py`). The legacy Streamlit demo needs the
+extra `pip install -r requirements-demo.txt`.
 
 ## Code style
 

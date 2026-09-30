@@ -176,7 +176,8 @@ the epidemic curve plus the `F` breakdown — or run a head-to-head
 comparison on fresh seeds.
 
 > **Legacy:** `streamlit_app.py` (the original Streamlit demo) still runs
-> but is unmaintained — the static site above is the supported demo.
+> but is unmaintained — the static site above is the supported demo. To try
+> it: `pip install -r requirements-demo.txt` then `streamlit run streamlit_app.py`.
 
 ## Results (Round 1)
 

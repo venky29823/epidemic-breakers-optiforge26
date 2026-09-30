@@ -1,0 +1,5 @@
+# Legacy Streamlit demo only (streamlit_app.py, unmaintained).
+# Install the core requirements first, then this file:
+#   pip install -r requirements.txt
+#   pip install -r requirements-demo.txt
+streamlit>=1.30
