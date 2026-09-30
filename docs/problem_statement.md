@@ -51,11 +51,11 @@ is made without a cited source.
 | random-search | 36.50 ± 4.47 |
 | (1+1)-ES | 40.00 ± 0.70 |
 
-Pre-specified contrasts (paired, bootstrap 95% CI): calibrated vs guided
-−9.34 [−11.72, −7.91] (calibrated better, CI excludes zero); guided vs
-vanilla +2.68 [−0.49, 4.66] (not established); guided vs random-weights
-+1.13 [−2.42, 3.56] (not established). n=3 pilot — wide CIs, no claims
-beyond the intervals. → `results/ablation_extended.csv`,
+Pre-specified contrasts (paired; bootstrap 95% CI and t-interval df=2,
+wider used): calibrated vs guided −9.34, t [−14.50, −4.18] (excludes
+zero); guided vs vanilla +2.68, t [−4.22, 9.57] (not established);
+guided vs random-weights +1.13, t [−6.68, 8.93] (not established).
+n=3 pilot — wide intervals, no claims beyond them. → `results/ablation_extended.csv`,
 `docs/analysis_plan.md`.
 
 ## Known limits
