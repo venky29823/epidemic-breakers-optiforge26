@@ -1,0 +1,12 @@
+method,n_runs,mean_train_F,mean_test_F,sd_test_F,paired_diff_mean,paired_diff_ci_lo,paired_diff_ci_hi
+random-search,3,26.699,36.503,4.472,,,
+vanilla GA,3,21.639,36.203,2.449,,,
+guided GA,3,20.431,33.526,2.54,,,
+random-weights GA,3,20.769,34.652,3.264,,,
+(1+1)-ES,3,31.666,39.995,0.7,,,
+calibrated,3,20.028,24.187,2.225,,,
+paired: random-search - guided GA,3,,,1.945,2.977,0.741,4.279
+paired: vanilla GA - guided GA,3,,,2.775,2.677,-0.494,4.665
+paired: random-weights GA - guided GA,3,,,3.143,1.126,-2.422,3.563
+paired: (1+1)-ES - guided GA,3,,,3.193,6.469,4.512,10.153
+paired: calibrated - guided GA,3,,,2.079,-9.34,-11.725,-7.913
